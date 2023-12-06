@@ -26,8 +26,14 @@ def make_me_available():
         table_name = os.environ['ROUTING_TABLE_NAME']
         ddb_entry_key = os.environ['ROUTING_ENTRY_KEY']
         dynamodb = boto3.client('dynamodb', region_name='us-west-2')
-        dynamodb.put_item(TableName=table_name,
-                          Item={'EndpointName':{'S':ddb_entry_key},assigned_ip:{'N':'1'}})
+        logging.info("Saving Table: {}, EndpointName: {}, IP: {}".format(table_name, ddb_entry_key, assigned_ip))
+        dynamodb.update_item(
+            TableName=table_name,
+            Key={'EndpointName': {'S': ddb_entry_key}},
+            UpdateExpression="SET #IP= :one".format(assigned_ip),
+            ExpressionAttributeNames={"#IP": "{}".format(assigned_ip)},
+            ExpressionAttributeValues={":one": {'N': '1'}}
+        )
 
 @app.route('/ping', methods=['GET'])
 def ping():
